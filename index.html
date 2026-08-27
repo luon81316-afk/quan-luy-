@@ -58,7 +58,9 @@
         <div class="row-box">
             <div class="card">
                 <div class="card-title">MENU ĐẶT MÓN</div>
-                <div class="menu-list" id="menuList"></div>
+                <div class="menu-list" id="menuList">
+                    <div style="color: #8a7565; font-size: 11px; text-align: center; padding: 10px;">Đang tải menu từ hệ thống...</div>
+                </div>
             </div>
             <div class="card">
                 <div class="card-title">THÔNG TIN NHẬN HÀNG</div>
@@ -90,15 +92,21 @@
         </div>
     </div>
     <script>
+        // Khởi tạo Firebase
         firebase.initializeApp({ databaseURL: "https://luonlv-default-rtdb.firebaseio.com" });
         const db = firebase.database();
         let currentPhone = "", currentPoints = 0;
 
+        // Tải Menu từ Firebase
         db.ref('menu').on('value', (snapshot) => {
             const data = snapshot.val();
             const menuListDiv = document.getElementById('menuList');
             menuListDiv.innerHTML = '';
-            if (!data) return;
+            
+            if (!data) {
+                menuListDiv.innerHTML = '<div style="color: #8a7565; font-size: 11px; text-align: center; padding: 10px;">Chưa có món trong cơ sở dữ liệu!</div>';
+                return;
+            }
 
             Object.keys(data).forEach(key => {
                 const item = data[key];
@@ -109,7 +117,7 @@
                 itemDiv.innerHTML = `
                     <div class="item-info">
                         <div class="name">${item.name}</div>
-                        <div class="price">${item.price.toLocaleString()}đ</div>
+                        <div class="price">${Number(item.price).toLocaleString()}đ</div>
                     </div>
                     <div class="qty-box">
                         <button type="button" class="qty-btn" onclick="changeQty(this, -1)">-</button>
@@ -166,7 +174,7 @@
                                 </div>
                                 <div class="history-details">🥤 Món: ${ord.items}</div>
                                 <div class="history-details">📍 Địa chỉ: ${ord.address}</div>
-                                <div class="history-meta">💰 Tổng tiền: ${ord.total.toLocaleString()}đ (Tiền mặt)</div>
+                                <div class="history-meta">💰 Tổng tiền: ${Number(ord.total).toLocaleString()}đ (Tiền mặt)</div>
                             </div>
                         `;
                     });
@@ -185,7 +193,7 @@
                                         <span class="badge-status st-accepted">Thành công</span>
                                     </div>
                                     <div class="history-details">🥤 Món: ${tr.items}</div>
-                                    <div class="history-meta">💰 Tổng tiền: ${tr.total.toLocaleString()}đ (${tr.cups} ly)</div>
+                                    <div class="history-meta">💰 Tổng tiền: ${Number(tr.total).toLocaleString()}đ (${tr.cups} ly)</div>
                                 </div>
                             `;
                         });
