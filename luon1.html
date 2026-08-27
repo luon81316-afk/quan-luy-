@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CAFE ÚT BỘT - ĐẶT MÓN ONLINE</title>
+    <!-- Thư viện Firebase Realtime Database -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background-color: #0d0a08; color: #d1c4b8; padding: 10px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+        header { text-align: center; margin-bottom: 12px; }
+        header h1 { color: #cda274; font-size: 20px; letter-spacing: 2px; font-weight: 600; }
+        .main-content { width: 100%; max-width: 850px; display: flex; flex-direction: column; gap: 15px; }
+        .row-box { display: flex; gap: 15px; width: 100%; }
+        .card { flex: 1; background-color: #17110d; border: 1px solid #3b2a1e; border-radius: 12px; padding: 15px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6); display: flex; flex-direction: column; min-width: 0; }
+        .card-title { color: #cda274; text-align: center; font-size: 14px; letter-spacing: 1.5px; margin-bottom: 12px; font-weight: bold; text-transform: uppercase; }
+        .menu-list { display: flex; flex-direction: column; gap: 8px; max-height: 420px; overflow-y: auto; padding-right: 4px; }
+        .menu-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; border: 1px solid #261b13; border-radius: 8px; background-color: #0d0a08; }
+        .item-info .name { font-size: 13px; color: #ffffff; font-weight: 500; }
+        .item-info .price { font-size: 11px; color: #8a7565; margin-top: 2px; }
+        .qty-box { display: flex; align-items: center; gap: 6px; }
+        .qty-btn { width: 26px; height: 26px; background: #261b13; color: #cda274; border: 1px solid #3b2a1e; border-radius: 6px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .qty-num { font-size: 13px; color: #fff; width: 20px; text-align: center; }
+        .input-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; width: 100%; }
+        input[type="tel"], input[type="text"] { width: 100%; padding: 10px 12px; background-color: #0d0a08; border: 1px solid #3b2a1e; border-radius: 8px; color: #fff; outline: none; font-size: 13px; }
+        .phone-row { display: flex; gap: 8px; }
+        .phone-row input { flex: 1; }
+        .btn-check { padding: 0 14px; background: linear-gradient(135deg, #c7925e, #9a6d41); color: #120e0c; border: none; border-radius: 8px; font-weight: bold; font-size: 12px; cursor: pointer; white-space: nowrap; }
+        .loyalty-box { background-color: #0d0a08; border: 1px solid #3b2a1e; border-radius: 8px; padding: 10px; text-align: center; display: flex; flex-direction: column; align-items: center; margin-bottom: 10px; }
+        .loyalty-title { color: #cda274; font-size: 10px; margin-bottom: 6px; font-weight: bold; }
+        .cups-grid { display: flex; justify-content: center; gap: 4px; margin-bottom: 6px; flex-wrap: wrap; max-width: 200px; }
+        .cup-dot { width: 20px; height: 20px; border-radius: 50%; background-color: #261b13; border: 1px solid #3b2a1e; display: flex; align-items: center; justify-content: center; font-size: 9px; color: #8a7565; }
+        .cup-dot.active { background-color: #c7925e; color: #120e0c; border-color: #cda274; font-weight: bold; }
+        .status-info { font-size: 11px; color: #ffffff; }
+        .cart-summary { font-size: 11px; color: #ffffff; width: 100%; text-align: left; margin-bottom: 4px; }
+        .btn-submit { width: 100%; background: linear-gradient(135deg, #c7925e, #9a6d41); color: #120e0c; border: none; padding: 11px; font-weight: bold; border-radius: 8px; font-size: 12px; cursor: pointer; margin-top: 4px; }
+        
+        .history-card { background-color: #17110d; border: 1px solid #3b2a1e; border-radius: 12px; padding: 15px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6); width: 100%; }
+        .history-list { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; max-height: 250px; overflow-y: auto; padding-right: 4px; }
+        .history-item { background-color: #0d0a08; border: 1px solid #3b2a1e; border-radius: 8px; padding: 10px; display: flex; flex-direction: column; gap: 4px; font-size: 11px; }
+        .history-item.rejected { border-color: #5c2222; opacity: 0.7; }
+        .history-header { display: flex; justify-content: space-between; color: #cda274; font-weight: bold; }
+        .history-details { color: #fff; }
+        .history-meta { color: #8a7565; font-size: 10px; }
+        .badge-status { padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; }
+        .st-pending { background: #5c4722; color: #ffe0b2; }
+        .st-accepted { background: #225c28; color: #c8e6c9; }
+        .st-rejected { background: #5c2222; color: #ffcccc; }
+
+        @media (max-width: 600px) { .row-box { flex-direction: column; } }
+    </style>
+</head>
+<body>
+    <header><h1>CAFE ÚT BỘT ☕</h1></header>
+    <div class="main-content">
+        <div class="row-box">
+            <div class="card">
+                <div class="card-title">MENU ĐẶT MÓN</div>
+                <div class="menu-list" id="menuList"></div>
+            </div>
+            <div class="card">
+                <div class="card-title">THÔNG TIN NHẬN HÀNG</div>
+                <div class="input-group">
+                    <div class="phone-row">
+                        <input type="tel" id="phoneInput" placeholder="Số điện thoại..." maxlength="11">
+                        <button type="button" class="btn-check" onclick="checkMember()">KIỂM TRA</button>
+                    </div>
+                    <input type="text" id="addressInput" placeholder="Nhập địa chỉ giao hàng...">
+                </div>
+                <div class="loyalty-box">
+                    <div class="loyalty-title">THẺ TÍCH ĐIỂM (10 CỐC TẶNG 1)</div>
+                    <div class="cups-grid">
+                        <div class="cup-dot">1</div><div class="cup-dot">2</div><div class="cup-dot">3</div><div class="cup-dot">4</div><div class="cup-dot">5</div>
+                        <div class="cup-dot">6</div><div class="cup-dot">7</div><div class="cup-dot">8</div><div class="cup-dot">9</div><div class="cup-dot">10</div>
+                    </div>
+                    <div class="status-info">Đã tích: <strong id="score" style="color:#cda274;">0</strong> / 10 LY</div>
+                </div>
+                <div class="cart-summary" id="cartSummary">🛒 Giỏ hàng: Chưa chọn món</div>
+                <div class="cart-summary" id="totalPrice" style="color: #cda274; font-weight: bold; margin-bottom: 8px;">Tổng tiền: 0đ</div>
+                <button type="button" class="btn-submit" onclick="guiDonHang()">GỬI ĐƠN & TÍCH ĐIỂM</button>
+            </div>
+        </div>
+        <div class="history-card">
+            <div class="card-title">📦 LỊCH SỬ MUA HÀNG & ĐƠN SHIP CỦA TÔI</div>
+            <div class="history-list" id="historyList">
+                <div style="color: #8a7565; font-size: 11px; text-align: center;">Vui lòng nhập số điện thoại ở trên và bấm KIỂM TRA để xem lịch sử...</div>
+            </div>
+        </div>
+    </div>
+    <script>
+        firebase.initializeApp({ databaseURL: "https://luonlv-default-rtdb.firebaseio.com" });
+        const db = firebase.database();
+        let currentPhone = "", currentPoints = 0;
+
+        db.ref('menu').on('value', (snapshot) => {
+            const data = snapshot.val();
+            const menuListDiv = document.getElementById('menuList');
+            menuListDiv.innerHTML = '';
+            if (!data) return;
+
+            Object.keys(data).forEach(key => {
+                const item = data[key];
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'menu-item';
+                itemDiv.setAttribute('data-name', item.name);
+                itemDiv.setAttribute('data-price', item.price);
+                itemDiv.innerHTML = `
+                    <div class="item-info">
+                        <div class="name">${item.name}</div>
+                        <div class="price">${item.price.toLocaleString()}đ</div>
+                    </div>
+                    <div class="qty-box">
+                        <button type="button" class="qty-btn" onclick="changeQty(this, -1)">-</button>
+                        <span class="qty-num">0</span>
+                        <button type="button" class="qty-btn" onclick="changeQty(this, 1)">+</button>
+                    </div>
+                `;
+                menuListDiv.appendChild(itemDiv);
+            });
+            updateCartSummary();
+        });
+
+        function checkMember() {
+            const phoneVal = document.getElementById('phoneInput').value.trim();
+            if (!phoneVal) { alert("Vui lòng nhập SĐT!"); return; }
+            currentPhone = phoneVal;
+            
+            db.ref('members/' + currentPhone).once('value', (snapshot) => {
+                currentPoints = snapshot.exists() ? snapshot.val().points : 0;
+                renderLoyaltyUI();
+            });
+
+            loadCustomerHistory(currentPhone);
+            alert("Đã xác nhận SĐT " + currentPhone);
+        }
+
+        function loadCustomerHistory(phone) {
+            const historyDiv = document.getElementById('historyList');
+            historyDiv.innerHTML = '<div style="color: #8a7565; font-size: 11px; text-align: center;">Đang tải lịch sử...</div>';
+
+            db.ref('orders').orderByChild('phone').equalTo(phone).once('value', (snapshot) => {
+                const ordersData = snapshot.val();
+                let historyHtml = '';
+
+                if (ordersData) {
+                    let keys = Object.keys(ordersData).reverse();
+                    keys.forEach(k => {
+                        const ord = ordersData[k];
+                        const status = ord.status || 'Chờ xác nhận';
+                        let badgeClass = 'st-pending', cardExtra = '';
+                        
+                        if (status === 'Đã chấp nhận' || status === 'Đã xong') {
+                            badgeClass = 'st-accepted';
+                        } else if (status === 'Đã từ chối') {
+                            badgeClass = 'st-rejected';
+                            cardExtra = 'rejected';
+                        }
+
+                        historyHtml += `
+                            <div class="history-item ${cardExtra}">
+                                <div class="history-header">
+                                    <span>🚚 Đơn Ship - ${ord.time}</span>
+                                    <span class="badge-status ${badgeClass}">${status}</span>
+                                </div>
+                                <div class="history-details">🥤 Món: ${ord.items}</div>
+                                <div class="history-details">📍 Địa chỉ: ${ord.address}</div>
+                                <div class="history-meta">💰 Tổng tiền: ${ord.total.toLocaleString()}đ (Tiền mặt)</div>
+                            </div>
+                        `;
+                    });
+                }
+
+                db.ref('transactions').orderByChild('phone').equalTo(phone).once('value', (transSnapshot) => {
+                    const transData = transSnapshot.val();
+                    if (transData) {
+                        let tKeys = Object.keys(transData).reverse();
+                        tKeys.forEach(tk => {
+                            const tr = transData[tk];
+                            historyHtml += `
+                                <div class="history-item">
+                                    <div class="history-header">
+                                        <span>☕ Mua tại quán - ${tr.time}</span>
+                                        <span class="badge-status st-accepted">Thành công</span>
+                                    </div>
+                                    <div class="history-details">🥤 Món: ${tr.items}</div>
+                                    <div class="history-meta">💰 Tổng tiền: ${tr.total.toLocaleString()}đ (${tr.cups} ly)</div>
+                                </div>
+                            `;
+                        });
+                    }
+
+                    if (!ordersData && !transData) {
+                        historyDiv.innerHTML = '<div style="color: #8a7565; font-size: 11px; text-align: center;">Chưa có lịch sử mua hàng nào với SĐT này.</div>';
+                    } else {
+                        historyDiv.innerHTML = historyHtml;
+                    }
+                });
+            });
+        }
+
+        function changeQty(btn, delta) {
+            const numSpan = btn.parentElement.querySelector('.qty-num');
+            let qty = parseInt(numSpan.innerText) + delta;
+            if (qty < 0) qty = 0;
+            numSpan.innerText = qty;
+            updateCartSummary();
+        }
+
+        function calculateTotal() {
+            let total = 0;
+            document.querySelectorAll('.menu-item').forEach(item => {
+                total += parseInt(item.getAttribute('data-price')) * parseInt(item.querySelector('.qty-num').innerText);
+            });
+            return total;
+        }
+
+        function updateCartSummary() {
+            let summaryText = "", itemCount = 0;
+            document.querySelectorAll('.menu-item').forEach(item => {
+                const qty = parseInt(item.querySelector('.qty-num').innerText);
+                if (qty > 0) { summaryText += ${item.getAttribute('data-name')} (x${qty}), ; itemCount += qty; }
+            });
+            document.getElementById('cartSummary').innerText = itemCount === 0 ? "🛒 Giỏ hàng: Chưa chọn món" : "🛒 Món: " + summaryText.slice(0, -2);
+            document.getElementById('totalPrice').innerText = "Tổng tiền: " + calculateTotal().toLocaleString() + "đ";
+        }
+
+        function renderLoyaltyUI() {
+            document.getElementById('score').innerText = currentPoints;
+            document.querySelectorAll('.cup-dot').forEach((dot, idx) => {
+                dot.classList.toggle('active', idx < currentPoints);
+            });
+        }
+
+        function guiDonHang() {
+            const phoneVal = document.getElementById('phoneInput').value.trim();
+            const addressVal = document.getElementById('addressInput').value.trim();
+
+            if (!phoneVal) { alert("Vui lòng nhập SĐT để đặt hàng và tích điểm!"); return; }
+            if (!addressVal) { alert("Vui lòng nhập địa chỉ để quán ship hàng nhé!"); return; }
+            
+            let orderItems = [], totalAmount = 0, totalCups = 0;
+            document.querySelectorAll('.menu-item').forEach(item => {
+                const qty = parseInt(item.querySelector('.qty-num').innerText);
+                if (qty > 0) { 
+                    orderItems.push(${item.getAttribute('data-name')} x${qty}); 
+                    totalAmount += parseInt(item.getAttribute('data-price')) * qty;
+                    totalCups += qty;
+                }
+            });
+
+            if (orderItems.length === 0) { alert("Vui lòng chọn món!"); return; }
+            
+            db.ref('orders').push({
+                phone: phoneVal, address: addressVal, items: orderItems.join(", "), total: totalAmount,
+                payment: "Tiền mặt", time: new Date().toLocaleTimeString(), status: "Chờ xác nhận"
+            });
+
+            db.ref('members/' + phoneVal).once('value', (snapshot) => {
+                let existingPoints = snapshot.exists() ? snapshot.val().points : 0;
+                let newPoints = existingPoints + totalCups;
+
+                if (newPoints >= 10) {
+                    alert("🎉 Khách đã tích đủ 10 ly! Hệ thống ghi nhận đổi 1 ly miễn phí.");
+                    newPoints -= 10;
+                }
+
+                db.ref('members/' + phoneVal).set({ points: newPoints }, (error) => {
+                    if (!error) {
+                        alert("🎉 Gửi đơn thành công! Đã tự động cộng " + totalCups + " ly vào tài khoản.");
+                        document.querySelectorAll('.qty-num').forEach(el => el.innerText = '0');
+                        document.getElementById('addressInput').value = '';
+                        updateCartSummary();
+                        currentPoints = newPoints;
+                        renderLoyaltyUI();
+                        loadCustomerHistory(phoneVal);
+                    }
+                });
+            });
+        }
+    </script>
+</body>
+</html>
